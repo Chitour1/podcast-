@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض مشروع بودكاست المركز العربي - إعادة هيكلة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            scroll-behavior: smooth;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .hero-section {
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                        url('https://www.transparenttextures.com/patterns/cubes.png');
+        }
+        .section-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            border: 1px solid #f1f5f9;
+        }
+        .nav-pill {
+            background: #0a2647;
+            color: white;
+            padding: 4px 16px;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .text-gold { color: #b2935b; }
+        .bg-gold { background-color: #b2935b; }
+        .bg-navy { background-color: #0a2647; }
+        .border-gold { border-color: #b2935b; }
+    </style>
+</head>
+<body>
+
+    <!-- أولاً: عنوان الاجتماع ومناقشة رد الإدارة -->
+    <header class="hero-section min-h-[70vh] flex items-center justify-center p-6 border-b border-slate-200">
+        <div class="max-w-4xl text-center">
+            <div class="mb-4 inline-block nav-pill">البند الأول: رد الإدارة</div>
+            <h1 class="text-4xl md:text-6xl font-extrabold text-[#0a2647] mb-8 leading-tight">
+                اجتماع لمناقشة الحلقة التجريبية لبودكاست المركز العربي
+            </h1>
+            <div class="p-8 bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border-t-4 border-gold">
+                <p class="text-xl md:text-2xl text-gray-700 leading-relaxed font-semibold">
+                    في ضوء رد الإدارة، إضافة لاستعراض تفصيلي لخطة إنتاج الموسم القادم ومناقشة كافة جوانبها الفنية والعملية.
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-20 space-y-32">
+
+        <!-- ثانياً: خطة الموسم القادم -->
+        <section id="next-season" class="space-y-12">
+            <div class="flex items-center gap-4 mb-8">
+                <span class="nav-pill">البند الثاني</span>
+                <h2 class="text-3xl font-extrabold text-[#0a2647]">خطة العمل والإنتاج (الموسم الأول)</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- السلوغن والأهداف -->
+                <div class="section-card p-8 border-r-4 border-gold">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-flag text-gold"></i> السلوغن والأهداف
+                    </h3>
+                    <p class="text-2xl text-navy font-bold italic mb-6">"الكتاب بصوت مؤلفه"</p>
+                    <ul class="space-y-4 text-gray-600">
+                        <li>تثبيت الشعار كعنوان فرعي دائم.</li>
+                        <li>البدء بإنتاج وتجهيز 10 حلقات كاملة قبل تحديد موعد الإطلاق الرسمي لضمان الاستمرارية.</li>
+                    </ul>
+                </div>
+
+                <!-- التوقيت والجمهور -->
+                <div class="section-card p-8 border-r-4 border-navy">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch text-navy"></i> التوقيت واستهداف جيل Z
+                    </h3>
+                    <ul class="space-y-4 text-gray-600">
+                        <li>الحرص على أن تكون الحلقات مركزة زمنياً (بحدود 50 دقيقة) لضمان عدم تشتت المشاهد.</li>
+                        <li>إنتاج مقاطع قصيرة تتراوح بين (30-180 ثانية) لكل حلقة، تتضمن اقتباسات قوية لنشرها على تيك توك وإنستغرام.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- المخزون الاستراتيجي والجدول الزمني -->
+            <div class="bg-navy text-white p-10 rounded-[30px] shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="space-y-4">
+                        <h4 class="text-gold font-bold text-lg">إنتاج المخزون الاستراتيجي</h4>
+                        <p class="text-sm text-slate-300">يتطلب المشروع إعداد عشر حلقات كاملة وجاهزة للنشر قبل الإطلاق الرسمي.</p>
+                        <p class="text-sm text-slate-300">جدولة مواعيد التسجيل مع باحثي وموظفي المركز العربي كمحاورين وضيوف رئيسيين.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-gold font-bold text-lg">المهام والسقف الزمني</h4>
+                        <ul class="text-sm text-slate-300 space-y-2">
+                            <li>إنجاز عشر حلقات كاملة وجاهزة قبل الإطلاق.</li>
+                            <li>اعتماد وتيرة شهرية (حلقة كل شهر).</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-gold font-bold text-lg">تنسيق المحتوى</h4>
+                        <p class="text-sm text-slate-300">التركيز على إصدارات باحثي المركز ومعهد الدوحة وفق قائمة (أحمد حماد).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ثالثاً: الأمور التقنية والعملية -->
+        <section id="technical" class="space-y-12">
+            <div class="flex items-center gap-4 mb-8">
+                <span class="nav-pill">البند الثالث</span>
+                <h2 class="text-3xl font-extrabold text-[#0a2647]">الأمور التقنية والعملية</h2>
+            </div>
+
+            <!-- مكان التسجيل وفريق العمل -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="section-card p-8">
+                    <h3 class="text-xl font-bold mb-6 underline decoration-gold decoration-4">مكان التسجيل (خيارات للنقاش)</h3>
+                    <div class="space-y-6">
+                        <div class="p-4 bg-slate-50 rounded-xl">
+                            <h4 class="font-bold text-navy">خيار الاستوديو:</h4>
+                            <p class="text-sm text-gray-600"><strong>المميزات:</strong> عزل احترافي وتحكم كامل في الإضاءة.</p>
+                            <p class="text-sm text-gray-500"><strong>التحديات:</strong> المساحة ضيقة، متاح لمرة واحدة شهرياً، مشترك، ومقيد زمنياً.</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-xl">
+                            <h4 class="font-bold text-navy">خيار مبنى المركز السابق:</h4>
+                            <p class="text-sm text-gray-600"><strong>المميزات:</strong> مساحة واسعة، حرية بصرية، تعديل ديكور، عدم الالتزام بجداول خارجية.</p>
+                            <p class="text-sm text-gray-500"><strong>التحديات:</strong> تكاليف إضافية للتجهيز (إضاءة وصوت متنقل).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card p-8">
+                    <h3 class="text-xl font-bold mb-6 underline decoration-navy decoration-4">فريق العمل والتصوير</h3>
+                    <div class="space-y-4 text-gray-600">
+                        <p><i class="fa-solid fa-circle-dot text-xs ml-2"></i>خيار فريق العمل المشترك: تشكيل فريق داخلي يضم (إبراهيم عبد الجواد، إبراهيم المصري، ومحمود مطاوع).</p>
+                        <div class="mt-4 p-4 bg-gold/10 rounded-xl border border-gold/20">
+                            <h4 class="font-bold text-navy mb-2">المتطلبات الاستراتيجية:</h4>
+                            <p class="text-sm">شراء المعدات اللازمة (كاميرات، إضاءة، وأجهزة صوت) للاستغناء عن المصادر الخارجية وتحقيق استقلالية الإنتاج.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- التحديات التقنية -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="section-card p-6 border-b-4 border-blue-500">
+                    <h4 class="font-bold mb-4 text-navy"><i class="fa-solid fa-microphone-slash ml-2"></i>مشكلة الصوت (Crosstalk)</h4>
+                    <p class="text-sm text-gray-600">البحث عن حل تقني يمنع تداخل صوت الضيف والمقدم في الميكروفونات، لتجنب المعاناة في حذف "أصوات الخلفية" أو "الاستنشاق".</p>
+                    <p class="text-sm text-navy font-bold mt-4">إيجاد حل جذري لتقارب الصوت لضمان استقلالية كل تراك.</p>
+                </div>
+                <div class="section-card p-6 border-b-4 border-purple-500">
+                    <h4 class="font-bold mb-4 text-navy"><i class="fa-solid fa-scissors ml-2"></i>الجرافيك والمونتاج</h4>
+                    <p class="text-sm text-gray-600">النقاش حول جدوى إبقاء الجرافيك للنصوص، وتحديد طريقته الفنية والمسؤول عنه.</p>
+                    <p class="text-sm text-gray-600 mt-2">اعتماد الطريقة المثلى للمونتاج لتجنب الـ (Jump Cuts) وضمان انتقال بصري ناعم.</p>
+                </div>
+                <div class="section-card p-6 border-b-4 border-orange-500">
+                    <h4 class="font-bold mb-4 text-navy"><i class="fa-solid fa-clapperboard ml-2"></i>الإضافات البصرية</h4>
+                    <p class="text-sm text-gray-600">تحديد السقف الزمني للمقدمة والخاتمة.</p>
+                    <p class="text-sm text-gray-600 mt-2">مناقشة تصوير فيديوهات (B-roll) للضيف مع الكتاب لاستخدامها في المونتاج والترويج.</p>
+                </div>
+            </div>
+
+            <!-- حلول الصوت والبرومو -->
+            <div class="section-card p-8 bg-slate-50">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div>
+                        <h4 class="font-bold mb-4 text-navy">معالجة الصوت + البرومو</h4>
+                        <p class="text-sm text-gray-600">العمل على إيجاد حل مستدام لضمان استقرار مستويات الصوت، سواء بالتعاقد مع مساعد أو التدريب داخلياً.</p>
+                        <p class="text-sm text-gray-600 mt-2">إنتاج مقاطع مقتطفة (30-180 ثانية) ونشر فيديو دعائي شامل قبل الانطلاق.</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-4 text-navy">هيكل الحلقة والإضافات</h4>
+                        <p class="text-sm text-gray-600">مناقشة إضافة خاتمة مسجلة من قبل المقدم لكل حلقة.</p>
+                        <p class="text-sm text-gray-600 mt-2">اعتماد ظهور الغلاف في البداية مع صوت المقدم.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- رابعاً: المحتوى والفلسفة -->
+        <section id="content" class="space-y-12">
+            <div class="flex items-center gap-4 mb-8">
+                <span class="nav-pill">البند الرابع</span>
+                <h2 class="text-3xl font-extrabold text-[#0a2647]">المحتوى والهوية المعرفية</h2>
+            </div>
+
+            <!-- الفلسفة والجمهور -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="section-card p-8">
+                    <h3 class="text-xl font-bold mb-6 text-navy">الإطار التأطيري والفلسفة التحريرية</h3>
+                    <ul class="space-y-4 text-gray-600">
+                        <li>تقديم الإنتاج العلمي للمركز في صيغة حوارية جذابة توازن بين البحث الأكاديمي الرصين والنقاش العام.</li>
+                        <li>التركيز على "التاريخ التشابكي" وتفكيك السرديات الجاهزة أو التبسيطية من خلال العودة للوثيقة والأرشيف.</li>
+                        <li>اعتماد لغة وسيطة توازن بين المصطلح الأكاديمي والسرد القصصي لتصل للجميع.</li>
+                    </ul>
+                </div>
+                <div class="section-card p-8">
+                    <h3 class="text-xl font-bold mb-6 text-navy">تصنيف المحتوى والجمهور</h3>
+                    <p class="text-gray-600 mb-4"><strong>الجمهور:</strong> الباحثون، طلبة الجامعات، والجيل الشاب (Gen Z) عبر المواد الترويجية المكثفة.</p>
+                    <p class="text-gray-600"><strong>الضيوف:</strong> التركيز حصراً على كتب باحثي المركز ومعهد الدوحة، والاعتماد الكلي على موظفي المؤسسة كتكريس لحضورها المعرفي.</p>
+                </div>
+            </div>
+
+            <!-- هيكل الحلقة المعتمد -->
+            <div class="section-card p-8 bg-white overflow-hidden relative">
+                <h3 class="text-xl font-bold mb-8 text-center">هيكل الحلقة المعتمد</h3>
+                <div class="flex flex-col md:flex-row gap-4 relative z-10">
+                    <div class="flex-1 p-4 bg-slate-50 rounded-xl border-t-4 border-gold text-center">
+                        <i class="fa-solid fa-image text-gold mb-2"></i>
+                        <h5 class="font-bold text-sm mb-2">البداية</h5>
+                        <p class="text-xs text-gray-500">ظهور غلاف الكتاب مع صوت المقدم (بدون ظهور الشخصيات).</p>
+                    </div>
+                    <div class="flex-1 p-4 bg-slate-50 rounded-xl border-t-4 border-gold text-center">
+                        <i class="fa-solid fa-book-open text-gold mb-2"></i>
+                        <h5 class="font-bold text-sm mb-2">الاستهلال</h5>
+                        <p class="text-xs text-gray-500">استهلال سردي يضع المستمع في أجواء الكتاب بشكل مشوق.</p>
+                    </div>
+                    <div class="flex-1 p-4 bg-slate-50 rounded-xl border-t-4 border-gold text-center">
+                        <i class="fa-solid fa-microscope text-gold mb-2"></i>
+                        <h5 class="font-bold text-sm mb-2">التأطير</h5>
+                        <p class="text-xs text-gray-500">تحديد أهمية الكتاب وإشكاليته الأساسية ضمن سياق الدراسات.</p>
+                    </div>
+                    <div class="flex-1 p-4 bg-slate-50 rounded-xl border-t-4 border-gold text-center">
+                        <i class="fa-solid fa-list-ol text-gold mb-2"></i>
+                        <h5 class="font-bold text-sm mb-2">النقاش</h5>
+                        <p class="text-xs text-gray-500">5 لحظات أو أفكار مفصلية مستمدة من هيكل الكتاب.</p>
+                    </div>
+                    <div class="flex-1 p-4 bg-navy text-white rounded-xl border-t-4 border-gold text-center">
+                        <i class="fa-solid fa-question text-gold mb-2"></i>
+                        <h5 class="font-bold text-sm mb-2 text-gold">الخاتمة</h5>
+                        <p class="text-xs text-slate-300">طرح سؤال مفتوح يدعو المستمع للتأمل المستمر بعد الحلقة.</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-podcast absolute -bottom-10 -left-10 text-[150px] opacity-5"></i>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-12 text-center mt-20">
+        <div class="max-w-4xl mx-auto px-6">
+            <p class="text-navy font-extrabold text-lg mb-2">المركز العربي للأبحاث ودراسة السياسات</p>
+            <p class="text-gray-400 text-sm">بودكاست المركز - الأجندة المحدثة للاجتماع</p>
+        </div>
+    </footer>
+
+</body>
+</html>
