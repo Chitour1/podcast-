@@ -24,7 +24,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 -d tools/build_fizilal_pro.py.gz.b64 | gzip -d > build_fizilal_pro.py
+          cat tools/build_pro_parts/part00 tools/build_pro_parts/part01 tools/build_pro_small/part04 tools/build_pro_small/part05 tools/build_pro_small/part06 tools/build_pro_small/part07 tools/build_pro_small/part08 tools/build_pro_small/part09 tools/build_pro_small/part10 tools/build_pro_small/part11 tools/build_pro_small/part12 tools/build_pro_small/part13 tools/build_pro_small/part14 tools/build_pro_small/part15 > build_fizilal_pro.py.gz.b64
+          test $(wc -c < build_fizilal_pro.py.gz.b64) -eq 38788
+          base64 -d build_fizilal_pro.py.gz.b64 | gzip -d > build_fizilal_pro.py
           python3 -m py_compile build_fizilal_pro.py
           BOOK_URL='https://islamport.com/kindle/%D8%A7%D9%84%D9%85%D9%83%D8%AA%D8%A8%D8%A9%20%D8%A7%D9%84%D8%B4%D8%A7%D9%85%D9%84%D8%A9%20%D9%84%D9%84%D9%83%D9%86%D8%AF%D9%84/%D8%A7%D9%84%D8%AA%D9%81%D8%A7%D8%B3%D9%8A%D8%B1/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86%20%D9%84%D9%80%20%D8%B3%D9%8A%D8%AF%20%D9%82%D8%B7%D8%A8.docx'
           curl -L --fail --retry 4 -A 'Mozilla/5.0' "$BOOK_URL" -o book.docx
