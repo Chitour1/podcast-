@@ -33,17 +33,17 @@ public class MainActivity extends Activity {
         findViewById(R.id.pickButton).setOnClickListener(v->pickAudio());processButton.setOnClickListener(v->process());
     }
     private void pickAudio(){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("audio/*");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,42);}
-    @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==42&&c==RESULT_OK&&d!=null){inputUri=d.getData();try{getContentResolver().takePersistableUriPermission(inputUri,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}fileName.setText("تم اختيار التسجيل");processButton.setEnabled(true);status.setText("جاهز للتنقية والهندسة المتدفقة");}}
+    @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==42&&c==RESULT_OK&&d!=null){inputUri=d.getData();try{getContentResolver().takePersistableUriPermission(inputUri,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}fileName.setText("تم اختيار التسجيل");processButton.setEnabled(true);status.setText("جاهز لتنقية v2 المحسنة والماستر الاحترافي");}}
     private void process(){
         processButton.setEnabled(false);progress.setProgress(0);status.setText("تحليل التسجيل...");
         PodcastProcessor.Options o=new PodcastProcessor.Options();o.preset=preset.getSelectedItemPosition();o.denoise=denoise.isChecked();o.deesser=deesser.isChecked();o.leveler=leveler.isChecked();o.master=master.isChecked();
         executor.submit(()->{
             PowerManager.WakeLock lock=null;Uri outputUri=null;
             try{
-                PowerManager pm=(PowerManager)getSystemService(POWER_SERVICE);lock=pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"PodcastForge:Processing");lock.acquire(12*60*60*1000L);
+                PowerManager pm=(PowerManager)getSystemService(POWER_SERVICE);lock=pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"PodcastForge:Processing");lock.acquire(8*60*60*1000L);
                 String stamp=new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US).format(new Date());ContentValues v=new ContentValues();v.put(MediaStore.Audio.Media.DISPLAY_NAME,"PodcastForge4_"+stamp+".wav");v.put(MediaStore.Audio.Media.MIME_TYPE,"audio/wav");v.put(MediaStore.Audio.Media.RELATIVE_PATH,"Music/PodcastForge");outputUri=getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,v);if(outputUri==null)throw new Exception("تعذر إنشاء ملف الإخراج");
                 try(OutputStream os=getContentResolver().openOutputStream(outputUri,"w")){PodcastProcessor.process(this,inputUri,os,o,(p,msg)->runOnUiThread(()->{progress.setProgress(p);status.setText(msg);}));}
-                runOnUiThread(()->{progress.setProgress(100);status.setText("اكتملت التنقية والهندسة وحُفظ الملف");processButton.setEnabled(true);Toast.makeText(this,"تم إنشاء النسخة البودكاستية",Toast.LENGTH_LONG).show();});
+                runOnUiThread(()->{progress.setProgress(100);status.setText("اكتملت التنقية والماستر وحُفظ الملف");processButton.setEnabled(true);Toast.makeText(this,"تم إنشاء النسخة البودكاستية",Toast.LENGTH_LONG).show();});
             }catch(Exception e){if(outputUri!=null)try{getContentResolver().delete(outputUri,null,null);}catch(Exception ignored){}String msg=e.getMessage()==null?e.getClass().getSimpleName():e.getMessage();runOnUiThread(()->{status.setText("تعذر إكمال المعالجة: "+msg);processButton.setEnabled(true);});}
             finally{if(lock!=null&&lock.isHeld())lock.release();}
         });
