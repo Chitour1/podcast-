@@ -1,0 +1,56 @@
+name: Build Fi Zilal Pro APK
+on:
+  push:
+    branches: [fi-zilal-pro-rebuild]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Prepare source data and project
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d tools/build_fizilal_pro.py.gz.b64 | gzip -d > build_fizilal_pro.py
+          python3 -m py_compile build_fizilal_pro.py
+          BOOK_URL='https://islamport.com/kindle/%D8%A7%D9%84%D9%85%D9%83%D8%AA%D8%A8%D8%A9%20%D8%A7%D9%84%D8%B4%D8%A7%D9%85%D9%84%D8%A9%20%D9%84%D9%84%D9%83%D9%86%D8%AF%D9%84/%D8%A7%D9%84%D8%AA%D9%81%D8%A7%D8%B3%D9%8A%D8%B1/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86%20%D9%84%D9%80%20%D8%B3%D9%8A%D8%AF%20%D9%82%D8%B7%D8%A8.docx'
+          curl -L --fail --retry 4 -A 'Mozilla/5.0' "$BOOK_URL" -o book.docx
+          curl -L --fail --retry 4 -A 'FiZilalAndroid/2.0' 'https://api.alquran.cloud/v1/quran/quran-uthmani' -o quran.json
+          test $(stat -c%s book.docx) -gt 5000000
+          test $(stat -c%s quran.json) -gt 1000000
+          BOOK_DOCX=book.docx QURAN_JSON=quran.json python3 build_fizilal_pro.py | tee validation.txt
+          grep -q 'VALIDATED_SURAH_COUNT=114' validation.txt
+          grep -q 'VALIDATED_AYAH_COUNT=6236' validation.txt
+          grep -q 'PROJECT_SOURCES_WRITTEN=complete' validation.txt
+          ! grep -R 'TextToSpeech\|sync_uri' app/src/main/java
+      - name: Build APK
+        run: gradle --no-daemon assembleDebug
+      - name: Validate APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          unzip -l "$APK" | grep -q 'assets/fizilal_pro.db'
+          echo "APK_BYTES=$(stat -c%s "$APK")" | tee -a validation.txt
+          sha256sum "$APK" | tee -a validation.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Fi-Zilal-Quran-Pro-Final
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            validation.txt
+          if-no-files-found: error
