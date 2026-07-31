@@ -9,12 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Restore project
+      - name: Restore Studio 5 project
         shell: bash
         run: |
           cat project.part00.b64 project.part01.b64 | base64 -d > project.zip
           unzip -q project.zip
-          cp -rf v3/app/* PodcastForge/app/
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -25,11 +24,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Build debug APK
+      - name: Build Studio 5 debug APK
         working-directory: PodcastForge
         run: gradle --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: PodcastForge-v3-APK
+          name: PodcastForge-Studio-5-APK
           path: PodcastForge/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
