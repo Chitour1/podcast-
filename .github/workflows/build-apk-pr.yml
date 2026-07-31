@@ -1,0 +1,37 @@
+name: Verify PodcastForge APK
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore project
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re, pathlib, base64
+          text = pathlib.Path('.github/workflows/build-apk.yml').read_text()
+          data = re.search(r"echo '([^']+)' \| base64", text).group(1)
+          pathlib.Path('project.zip').write_bytes(base64.b64decode(data))
+          PY
+          unzip -q project.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build debug APK
+        working-directory: PodcastForge
+        run: gradle --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PodcastForge-APK
+          path: PodcastForge/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
