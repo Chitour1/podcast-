@@ -12,12 +12,7 @@ jobs:
       - name: Restore project
         shell: bash
         run: |
-          python3 - <<'PY'
-          import re, pathlib, base64
-          text = pathlib.Path('.github/workflows/build-apk.yml').read_text()
-          data = re.search(r"echo '([^']+)' \| base64", text).group(1)
-          pathlib.Path('project.zip').write_bytes(base64.b64decode(data))
-          PY
+          cat project.part00.b64 project.part01.b64 | base64 -d > project.zip
           unzip -q project.zip
       - uses: actions/setup-java@v4
         with:
