@@ -2,6 +2,8 @@ name: Build Fi Zilal Pro APK
 on:
   push:
     branches: [fi-zilal-pro-rebuild]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
