@@ -4,7 +4,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'pf9s9.part00'
+      - 'pf9s9.p0000'
+      - 'pf9s9.p0001'
+      - 'pf9s9.p0002'
+      - 'pf9s9.p0003'
+      - 'pf9s9.p0004'
+      - 'pf9s9.p0005'
       - 'pf9s9.part01'
       - 'pf9s9.part02'
       - '.github/workflows/build-podcastforge9.yml'
@@ -24,11 +29,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sha256sum pf9s9.part00 pf9s9.part01 pf9s9.part02
-          cat pf9s9.part00 pf9s9.part01 pf9s9.part02 > pf9studio9.b64
+          echo 'cab5c3b5835c52567735133355ace84cb06720746bfaf0504c57305722a64a3a  pf9s9.p0000' | sha256sum -c -
+          echo 'e8bb77a0cb632b2e487c56fa9c55c674127689578a9925918d96245d7637b023  pf9s9.p0001' | sha256sum -c -
+          echo '992fc4fdb840032418a10852533c12fc56eb4e3cbee7cce7ec8d84068a5b5237  pf9s9.p0002' | sha256sum -c -
+          echo '14872c7d428789de7d7faac308521be345f0670e3f2f22033f7480f107a16332  pf9s9.p0003' | sha256sum -c -
+          echo '55e796e040e2613b9a40ee673b9017d8849c4b9b452c77ff5ec05b562d8df566  pf9s9.p0004' | sha256sum -c -
+          echo '3b9bd3520a21b25ee0bd3b0a2d4eadf88fbd43318cb1e5da3fa2d27e591c0315  pf9s9.p0005' | sha256sum -c -
+          echo 'd996cc3077c3a8765197ffc77a05b76e2a1c520e69e8dd78bf44510c337e40a0  pf9s9.part01' | sha256sum -c -
+          echo 'ed549c031d828d68f8243462da98d22786b3ef466ab75cdddb8441e92e560980  pf9s9.part02' | sha256sum -c -
+          cat pf9s9.p0000 pf9s9.p0001 pf9s9.p0002 pf9s9.p0003 pf9s9.p0004 pf9s9.p0005 pf9s9.part01 pf9s9.part02 > pf9studio9.b64
           test "$(wc -c < pf9studio9.b64)" -eq 26980
           base64 -d pf9studio9.b64 > pf9studio9.zip
-          sha256sum pf9studio9.zip
+          echo 'e08e2b1bf19500bcd739ded690fd7b67296e5b424e4e3d10c24c1189d4a73342  pf9studio9.zip' | sha256sum -c -
           unzip -tq pf9studio9.zip
           unzip -q pf9studio9.zip
           test -f PodcastForgeStudio9/settings.gradle
