@@ -2,8 +2,6 @@ name: Build Fi Zilal Complete APK
 on:
   push:
     branches: [fi-zilal-complete-rebuild]
-    paths-ignore:
-      - 'delivery/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -26,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp tools/final_parts/part00.b64 build_fizilal_final.py.gz.b64
+          cat tools/final_rebuild/part00 tools/final_rebuild/part01 tools/final_rebuild/rest00 tools/final_rebuild/rest01 tools/final_rebuild/rest02 tools/final_rebuild/rest03 tools/final_rebuild/rest04 tools/final_rebuild/rest05 tools/final_rebuild/rest06 tools/final_rebuild/rest07 tools/final_rebuild/rest08 > build_fizilal_final.py.gz.b64
           test $(wc -c < build_fizilal_final.py.gz.b64) -eq 51804
           base64 -d build_fizilal_final.py.gz.b64 | gzip -d > build_fizilal_final.py
           python3 -m py_compile build_fizilal_final.py
