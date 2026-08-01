@@ -2,6 +2,8 @@ name: Build Fi Zilal Complete APK
 on:
   push:
     branches: [main, fi-zilal-complete-rebuild]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: write
@@ -29,7 +31,7 @@ jobs:
           BOOK_URL='https://islamport.com/kindle/%D8%A7%D9%84%D9%85%D9%83%D8%AA%D8%A8%D8%A9%20%D8%A7%D9%84%D8%B4%D8%A7%D9%85%D9%84%D8%A9%20%D9%84%D9%84%D9%83%D9%86%D8%AF%D9%84/%D8%A7%D9%84%D8%AA%D9%81%D8%A7%D8%B3%D9%8A%D8%B1/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86%20%D9%84%D9%80%20%D8%B3%D9%8A%D8%AF%20%D9%82%D8%B7%D8%A8.docx'
           curl -L --fail --retry 4 -A 'Mozilla/5.0' "$BOOK_URL" -o book.docx
           curl -L --fail --retry 4 -A 'FiZilalAndroid/10.0' 'https://api.alquran.cloud/v1/quran/quran-uthmani' -o quran.json
-          curl -L --fail --retry 4 -A 'FiZilalAndroid/10.0' 'https://api.alquran.cloud/v1/quran/quran-simple-clean' -o comparison.json
+          cp quran.json comparison.json
           test $(stat -c%s book.docx) -gt 5000000
           test $(stat -c%s quran.json) -gt 1000000
           BOOK_DOCX=book.docx QURAN_JSON=quran.json COMPARE_JSON=comparison.json python3 build_fizilal_final.py | tee validation.txt
@@ -58,9 +60,3 @@ jobs:
             Fi-Zilal-Complete-Final.apk
             validation.txt
           if-no-files-found: error
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release delete fi-zilal-complete-latest --cleanup-tag --yes || true
-          gh release create fi-zilal-complete-latest Fi-Zilal-Complete-Final.apk validation.txt --title 'في ظلال القرآن — النسخة الكاملة' --notes 'تطبيق Android محلي كامل؛ الاتصال للتلاوة الصوتية الاختيارية فقط.'
