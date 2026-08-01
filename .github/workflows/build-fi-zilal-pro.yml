@@ -31,16 +31,37 @@ jobs:
           from pathlib import Path
           p = Path('build_fizilal_final.py')
           s = p.read_text(encoding='utf-8')
-          old_match = "if t == canon or t.startswith('سوره ' + canon):"
-          new_match = "if t == canon or t.startswith('سوره ' + canon) or t.startswith(canon + ' ') or (len(t) < 90 and canon in t):"
+          old_match = """        if stripped == name or (name and name in stripped and len(stripped) < len(name) + 28):
+            found = j
+            break
+"""
+          new_match = """        heading_like = (
+            stripped == name
+            or (name and stripped.startswith(name + ' ') and len(stripped) < len(name) + 90)
+            or (name and name in stripped and len(stripped) < len(name) + 90)
+        )
+        if heading_like:
+            found = j
+            break
+"""
           if old_match not in s:
               raise SystemExit('HEADING_PATCH_TARGET_NOT_FOUND')
           s = s.replace(old_match, new_match)
-          old = """    if found is None:\n        raise SystemExit('MISSING_SURAH=%d:%s;FOUND=%d' % (idx, name, len(starts)))\n    starts.append(found)\n    pos = found + 1\n"""
-          new = """    if found is None and idx == 1:\n        found = -1\n    if found is None:\n        raise SystemExit('MISSING_SURAH=%d:%s;FOUND=%d' % (idx, name, len(starts)))\n    starts.append(found)\n    pos = max(0, found + 1)\n"""
-          if old not in s:
-              raise SystemExit('PARSER_PATCH_TARGET_NOT_FOUND')
-          p.write_text(s.replace(old, new), encoding='utf-8')
+          old = """    if found is None:
+        raise SystemExit('MISSING_SURAH=%d:%s;FOUND=%d' % (idx, name, len(starts)))
+    starts.append(found)
+    pos = found + 1
+"""
+          new = """    if found is None and idx == 1:
+        found = -1
+    if found is None:
+        raise SystemExit('MISSING_SURAH=%d:%s;FOUND=%d' % (idx, name, len(starts)))
+    starts.append(found)
+    pos = max(0, found + 1)
+"""
+          if old in s:
+              s = s.replace(old, new)
+          p.write_text(s, encoding='utf-8')
           PY
           python3 -m py_compile build_fizilal_final.py
           BOOK_URL='https://islamport.com/kindle/%D8%A7%D9%84%D9%85%D9%83%D8%AA%D8%A8%D8%A9%20%D8%A7%D9%84%D8%B4%D8%A7%D9%85%D9%84%D8%A9%20%D9%84%D9%84%D9%83%D9%86%D8%AF%D9%84/%D8%A7%D9%84%D8%AA%D9%81%D8%A7%D8%B3%D9%8A%D8%B1/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86/%D9%81%D9%8A%20%D8%B8%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86%20%D9%84%D9%80%20%D8%B3%D9%8A%D8%AF%20%D9%82%D8%B7%D8%A8.docx'
