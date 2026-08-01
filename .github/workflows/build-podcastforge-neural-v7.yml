@@ -1,0 +1,87 @@
+name: Build PodcastForge Neural Studio 7
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'pf7clean.b64'
+      - '.github/workflows/build-podcastforge-neural-v7.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore independent project
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d pf7clean.b64 > pf7clean.zip
+          unzip -q pf7clean.zip
+          test -f pf7clean/settings.gradle
+          test -f pf7clean/app/build.gradle
+
+      - name: Download official Sherpa ONNX runtime and DPDFNet model
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pf7clean/app/libs pf7clean/app/src/main/assets
+          curl --retry 3 --retry-delay 2 -fL \
+            'https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.2/sherpa-onnx-1.13.2.aar' \
+            -o pf7clean/app/libs/sherpa-onnx.aar
+
+          model='pf7clean/app/src/main/assets/dpdfnet8_48khz_hr.onnx'
+          success=0
+          for url in \
+            'https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet8_48khz_hr.onnx' \
+            'https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet2_48khz_hr.onnx' \
+            'https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet_baseline.onnx'
+          do
+            if curl --retry 2 --retry-delay 2 -fL "$url" -o "$model"; then
+              success=1
+              break
+            fi
+          done
+          test "$success" -eq 1
+          test -s "$model"
+          unzip -tq pf7clean/app/libs/sherpa-onnx.aar
+          ls -lh pf7clean/app/libs/sherpa-onnx.aar "$model"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build independent APK
+        working-directory: pf7clean
+        run: gradle --no-daemon assembleDebug
+
+      - name: Verify APK contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='pf7clean/app/build/outputs/apk/debug/app-debug.apk'
+          test -s "$apk"
+          unzip -l "$apk" | grep -q 'lib/arm64-v8a/libsherpa-onnx-jni.so'
+          unzip -l "$apk" | grep -q 'assets/dpdfnet8_48khz_hr.onnx'
+          sha256sum "$apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PodcastForge-Neural-Studio-7-APK
+          path: pf7clean/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
