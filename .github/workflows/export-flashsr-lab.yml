@@ -1,0 +1,30 @@
+name: Export FlashSR Lab Assets
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download FlashSR ONNX and Linux evaluator runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --retry 4 --retry-delay 2 -fL 'https://huggingface.co/YatharthS/FlashSR/resolve/refs%2Fpr%2F1/onnx/model.onnx?download=true' -o flashsr.onnx
+          test $(stat -c%s flashsr.onnx) -gt 400000
+          mkdir wheels
+          python -m pip download --only-binary=:all: --dest wheels 'onnxruntime==1.20.1'
+          sha256sum flashsr.onnx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FlashSR-Lab-Assets
+          path: |
+            flashsr.onnx
+            wheels/*
+          if-no-files-found: error
