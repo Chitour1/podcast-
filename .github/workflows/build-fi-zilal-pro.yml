@@ -1,9 +1,7 @@
 name: Build Fi Zilal Complete APK
 on:
   push:
-    branches: [fi-zilal-complete-rebuild]
-  pull_request:
-    branches: [main]
+    branches: [main, fi-zilal-complete-rebuild]
   workflow_dispatch:
 permissions:
   contents: write
@@ -60,10 +58,9 @@ jobs:
             Fi-Zilal-Complete-Final.apk
             validation.txt
           if-no-files-found: error
-      - name: Publish downloadable release
-        if: github.event_name != 'pull_request'
+      - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete fi-zilal-complete-latest --cleanup-tag --yes || true
-          gh release create fi-zilal-complete-latest Fi-Zilal-Complete-Final.apk validation.txt --title 'في ظلال القرآن — النسخة الكاملة' --notes 'نسخة Android كاملة للعمل دون إنترنت، باستثناء التلاوة الصوتية الاختيارية.'
+          gh release create fi-zilal-complete-latest Fi-Zilal-Complete-Final.apk validation.txt --title 'في ظلال القرآن — النسخة الكاملة' --notes 'تطبيق Android محلي كامل؛ الاتصال للتلاوة الصوتية الاختيارية فقط.'
