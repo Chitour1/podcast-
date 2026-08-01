@@ -63,7 +63,26 @@ jobs:
             raise SystemExit('No MediaStore output path was patched')
           print('\n'.join(changed))
           PY
-          grep -R "RELATIVE_PATH\|DIRECTORY_PODCASTS\|Podcasts/PodcastForge" -n pf7clean/app/src/main || true
+      - name: Add Kotlin runtime required by Sherpa
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('pf7clean/app/build.gradle')
+          s=p.read_text()
+          dep="implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.24'"
+          if dep not in s:
+              marker='dependencies {'
+              if marker not in s:
+                  raise SystemExit('dependencies block not found')
+              s=s.replace(marker, marker+'\n    '+dep, 1)
+          s=re.sub(r'versionCode\s+\d+', 'versionCode 8', s, count=1)
+          s=re.sub(r'versionName\s+["\'][^"\']+["\']', 'versionName "7.1.1"', s, count=1)
+          p.write_text(s)
+          PY
+          grep -n "kotlin-stdlib\|versionCode\|versionName" pf7clean/app/build.gradle
       - name: Download official Sherpa ONNX runtime and DPDFNet
         shell: bash
         run: |
@@ -95,7 +114,7 @@ jobs:
       - name: Build independent Neural Studio 7 APK
         working-directory: pf7clean
         run: gradle --no-daemon assembleDebug
-      - name: Verify neural runtime, model, and valid audio output path
+      - name: Verify runtime, model, Kotlin classes, and output path
         shell: bash
         run: |
           set -euo pipefail
@@ -104,13 +123,18 @@ jobs:
           unzip -l "$apk" | grep -q 'lib/arm64-v8a/libsherpa-onnx-jni.so'
           unzip -l "$apk" | grep -q 'assets/dpdfnet8_48khz_hr.onnx'
           if grep -R 'Environment.DIRECTORY_DOWNLOADS\|"Download/PodcastForge"\|"Downloads/PodcastForge"' -n pf7clean/app/src/main; then
-            echo 'Invalid audio output directory remains'
             exit 1
           fi
           grep -R 'DIRECTORY_PODCASTS\|Podcasts/PodcastForge' -n pf7clean/app/src/main
+          found=0
+          for dex in $(zipinfo -1 "$apk" | grep -E '^classes[0-9]*\.dex$'); do
+            unzip -p "$apk" "$dex" > "/tmp/$dex"
+            if strings "/tmp/$dex" | grep -Fq 'Lkotlin/jvm/internal/Intrinsics;'; then found=1; fi
+          done
+          test "$found" -eq 1
           sha256sum "$apk"
       - uses: actions/upload-artifact@v4
         with:
-          name: PodcastForge-Neural-Studio-7-Fixed-APK
+          name: PodcastForge-Neural-Studio-7.1.1-APK
           path: pf7clean/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
