@@ -17,6 +17,21 @@ jobs:
           base64 -d pf7clean.b64 > pf7clean.zip
           unzip -q pf7clean.zip
           test -f pf7clean/settings.gradle
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('pf7clean/app/src/main/java/com/acrps/podcastforge7/NeuralPodcastEngine.java')
+          s=p.read_text()
+          old='''OfflineSpeechDenoiserDpdfNetModelConfig mc=OfflineSpeechDenoiserDpdfNetModelConfig.builder().setModel(model.getAbsolutePath()).build();
+                  OfflineSpeechDenoiserModelConfig om=OfflineSpeechDenoiserModelConfig.builder().setDpdfnet(mc).setNumThreads(Math.max(2,Runtime.getRuntime().availableProcessors()/2)).setDebug(false).setProvider("cpu").build();
+                  OnlineSpeechDenoiser den=new OnlineSpeechDenoiser(OnlineSpeechDenoiserConfig.builder().setModel(om).build());'''
+          new='''OfflineSpeechDenoiserGtcrnModelConfig gtcrn=new OfflineSpeechDenoiserGtcrnModelConfig("");
+                  OfflineSpeechDenoiserDpdfNetModelConfig mc=new OfflineSpeechDenoiserDpdfNetModelConfig(model.getAbsolutePath());
+                  OfflineSpeechDenoiserModelConfig om=new OfflineSpeechDenoiserModelConfig(gtcrn,mc,Math.max(2,Runtime.getRuntime().availableProcessors()/2),false,"cpu");
+                  OnlineSpeechDenoiserConfig config=new OnlineSpeechDenoiserConfig(om);
+                  OnlineSpeechDenoiser den=new OnlineSpeechDenoiser(null,config);'''
+          if old not in s: raise SystemExit('Expected API block not found')
+          p.write_text(s.replace(old,new))
+          PY
       - name: Download official Sherpa ONNX runtime and DPDFNet
         shell: bash
         run: |
