@@ -31,6 +31,11 @@ jobs:
           from pathlib import Path
           p = Path('build_fizilal_final.py')
           s = p.read_text(encoding='utf-8')
+          old_match = "if t == canon or t.startswith('سوره ' + canon):"
+          new_match = "if t == canon or t.startswith('سوره ' + canon) or t.startswith(canon + ' ') or (len(t) < 90 and canon in t):"
+          if old_match not in s:
+              raise SystemExit('HEADING_PATCH_TARGET_NOT_FOUND')
+          s = s.replace(old_match, new_match)
           old = """    if found is None:\n        raise SystemExit('MISSING_SURAH=%d:%s;FOUND=%d' % (idx, name, len(starts)))\n    starts.append(found)\n    pos = found + 1\n"""
           new = """    if found is None and idx == 1:\n        found = -1\n    if found is None:\n        raise SystemExit('MISSING_SURAH=%d:%s;FOUND=%d' % (idx, name, len(starts)))\n    starts.append(found)\n    pos = max(0, found + 1)\n"""
           if old not in s:
