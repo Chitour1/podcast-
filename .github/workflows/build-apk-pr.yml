@@ -32,6 +32,38 @@ jobs:
           if old not in s: raise SystemExit('Expected API block not found')
           p.write_text(s.replace(old,new))
           PY
+      - name: Fix Android MediaStore output directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          roots=[Path('pf7clean/app/src/main/java'),Path('pf7clean/app/src/main/kotlin')]
+          replacements={
+            'Environment.DIRECTORY_DOWNLOADS':'Environment.DIRECTORY_PODCASTS',
+            'MediaStore.Downloads.EXTERNAL_CONTENT_URI':'MediaStore.Audio.Media.EXTERNAL_CONTENT_URI',
+            '"Download/PodcastForge"':'"Podcasts/PodcastForge"',
+            '"Downloads/PodcastForge"':'"Podcasts/PodcastForge"',
+            '"Download/PodcastForge/"':'"Podcasts/PodcastForge/"',
+            '"Downloads/PodcastForge/"':'"Podcasts/PodcastForge/"',
+            '"Download"':'"Podcasts"',
+            '"Downloads"':'"Podcasts"'
+          }
+          changed=[]
+          for root in roots:
+            if not root.exists(): continue
+            for p in list(root.rglob('*.java'))+list(root.rglob('*.kt')):
+              s=p.read_text()
+              t=s
+              for a,b in replacements.items(): t=t.replace(a,b)
+              if t!=s:
+                p.write_text(t)
+                changed.append(str(p))
+          if not changed:
+            raise SystemExit('No MediaStore output path was patched')
+          print('\n'.join(changed))
+          PY
+          grep -R "RELATIVE_PATH\|DIRECTORY_PODCASTS\|Podcasts/PodcastForge" -n pf7clean/app/src/main || true
       - name: Download official Sherpa ONNX runtime and DPDFNet
         shell: bash
         run: |
@@ -63,7 +95,7 @@ jobs:
       - name: Build independent Neural Studio 7 APK
         working-directory: pf7clean
         run: gradle --no-daemon assembleDebug
-      - name: Verify neural runtime and model are packaged
+      - name: Verify neural runtime, model, and valid audio output path
         shell: bash
         run: |
           set -euo pipefail
@@ -71,9 +103,14 @@ jobs:
           test -s "$apk"
           unzip -l "$apk" | grep -q 'lib/arm64-v8a/libsherpa-onnx-jni.so'
           unzip -l "$apk" | grep -q 'assets/dpdfnet8_48khz_hr.onnx'
+          if grep -R 'Environment.DIRECTORY_DOWNLOADS\|"Download/PodcastForge"\|"Downloads/PodcastForge"' -n pf7clean/app/src/main; then
+            echo 'Invalid audio output directory remains'
+            exit 1
+          fi
+          grep -R 'DIRECTORY_PODCASTS\|Podcasts/PodcastForge' -n pf7clean/app/src/main
           sha256sum "$apk"
       - uses: actions/upload-artifact@v4
         with:
-          name: PodcastForge-Neural-Studio-7-APK
+          name: PodcastForge-Neural-Studio-7-Fixed-APK
           path: pf7clean/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
