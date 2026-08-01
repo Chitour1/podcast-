@@ -14,8 +14,13 @@ jobs:
         run: |
           set -euo pipefail
           git clone --depth 1 https://github.com/gabrielmittag/NISQA.git NISQA
-          test -f NISQA/weights/nisqa.tar
-          test $(stat -c%s NISQA/weights/nisqa.tar) -gt 10000000
+          cd NISQA
+          git lfs install
+          git lfs pull
+          find weights -maxdepth 1 -type f -printf '%f %s bytes\n'
+          test -f weights/nisqa.tar
+          test $(stat -c%s weights/nisqa.tar) -gt 10000000
+          cd ..
           rm -rf NISQA/.git
           tar -czf NISQA-Evaluator.tar.gz NISQA
           sha256sum NISQA-Evaluator.tar.gz
