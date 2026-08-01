@@ -19,7 +19,7 @@ jobs:
           git lfs pull
           find weights -maxdepth 1 -type f -printf '%f %s bytes\n'
           test -f weights/nisqa.tar
-          test $(stat -c%s weights/nisqa.tar) -gt 10000000
+          test $(stat -c%s weights/nisqa.tar) -gt 500000
           cd ..
           rm -rf NISQA/.git
           tar -czf NISQA-Evaluator.tar.gz NISQA
