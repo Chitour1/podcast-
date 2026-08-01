@@ -1,9 +1,7 @@
-name: Build Fi Zilal Pro APK
+name: Build Fi Zilal Complete APK
 on:
   push:
-    branches: [fi-zilal-pro-rebuild]
-  pull_request:
-    branches: [main]
+    branches: [fi-zilal-complete-rebuild]
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,7 +49,7 @@ jobs:
           sha256sum "$APK" | tee -a validation.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Fi-Zilal-Quran-Pro-Final
+          name: Fi-Zilal-Complete-Final
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             validation.txt
