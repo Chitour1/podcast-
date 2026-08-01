@@ -13,12 +13,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mvn -q dependency:copy -Dartifact=com.microsoft.onnxruntime:onnxruntime:1.20.1 -DoutputDirectory=ortjava
-          test -f ortjava/onnxruntime-1.20.1.jar
-          test $(stat -c%s ortjava/onnxruntime-1.20.1.jar) -gt 50000000
-          sha256sum ortjava/onnxruntime-1.20.1.jar
+          mvn -q dependency:copy -Dartifact=com.microsoft.onnxruntime:onnxruntime:1.20.0 -DoutputDirectory=ortjava
+          test -f ortjava/onnxruntime-1.20.0.jar
+          test $(stat -c%s ortjava/onnxruntime-1.20.0.jar) -gt 50000000
+          sha256sum ortjava/onnxruntime-1.20.0.jar
       - uses: actions/upload-artifact@v4
         with:
           name: ONNX-Runtime-Java
-          path: ortjava/onnxruntime-1.20.1.jar
+          path: ortjava/onnxruntime-1.20.0.jar
           if-no-files-found: error
