@@ -2,11 +2,13 @@ name: Build Fi Zilal Complete APK
 on:
   push:
     branches: [fi-zilal-complete-rebuild]
+    paths-ignore:
+      - 'delivery/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,10 +54,18 @@ jobs:
           test $(stat -c%s "$APK") -gt 2000000
           echo "APK_BYTES=$(stat -c%s "$APK")" | tee -a validation.txt
           sha256sum "$APK" | tee -a validation.txt
+          cp "$APK" Fi-Zilal-Complete-Final.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Fi-Zilal-Complete-Final
           path: |
-            app/build/outputs/apk/debug/app-debug.apk
+            Fi-Zilal-Complete-Final.apk
             validation.txt
           if-no-files-found: error
+      - name: Publish downloadable release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete fi-zilal-complete-latest --cleanup-tag --yes || true
+          gh release create fi-zilal-complete-latest Fi-Zilal-Complete-Final.apk validation.txt --title 'في ظلال القرآن — النسخة الكاملة' --notes 'نسخة Android كاملة للعمل دون إنترنت، باستثناء التلاوة الصوتية الاختيارية.'
