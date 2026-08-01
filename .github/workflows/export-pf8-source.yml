@@ -1,0 +1,23 @@
+name: Export PodcastForge Studio 8 Source
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat pf8.part00 pf8.part01 pf8.part02 pf8.part03 pf8.part04 > pf8.b64
+          base64 -d pf8.b64 > PodcastForge-Studio-8-Source.zip
+          unzip -tq PodcastForge-Studio-8-Source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PodcastForge-Studio-8-Source
+          path: PodcastForge-Studio-8-Source.zip
+          if-no-files-found: error
