@@ -1,0 +1,67 @@
+name: Build PodcastForge Studio 8
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore Studio 8 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat pf8.part00 pf8.part01 pf8.part02 pf8.part03 pf8.part04 > pf8.b64
+          base64 -d pf8.b64 > pf8.zip
+          unzip -tq pf8.zip
+          unzip -q pf8.zip
+          test -f pf8clean/app/src/main/java/com/acrps/podcastforge8/NeuralPodcastEngine.java
+      - name: Download neural runtimes and model
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pf8clean/app/libs pf8clean/app/src/main/assets
+          curl --retry 4 --retry-delay 2 -fL 'https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.2/sherpa-onnx-1.13.2.aar' -o pf8clean/app/libs/sherpa-onnx.aar
+          model='pf8clean/app/src/main/assets/dpdfnet2_48khz_hr.onnx'
+          ok=0
+          for url in \
+            'https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet2_48khz_hr.onnx' \
+            'https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet8_48khz_hr.onnx'
+          do
+            if curl --retry 3 --retry-delay 2 -fL "$url" -o "$model"; then ok=1; break; fi
+          done
+          test "$ok" -eq 1
+          test -s "$model"
+          unzip -tq pf8clean/app/libs/sherpa-onnx.aar
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Build APK
+        working-directory: pf8clean
+        run: gradle --no-daemon assembleDebug
+      - name: Verify packaged engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='pf8clean/app/build/outputs/apk/debug/app-debug.apk'
+          test -s "$apk"
+          unzip -tq "$apk"
+          unzip -l "$apk" | grep -q 'lib/arm64-v8a/libsherpa-onnx-jni.so'
+          unzip -l "$apk" | grep -q 'assets/dpdfnet2_48khz_hr.onnx'
+          unzip -l "$apk" | grep -q 'kotlin'
+          grep -R 'Podcasts/PodcastForge' -n pf8clean/app/src/main/java/com/acrps/podcastforge8/ProcessingService.java
+          sha256sum "$apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PodcastForge-Studio-8-APK
+          path: pf8clean/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
