@@ -1,0 +1,1 @@
+Trigger the pull request workflow after enabling pull_request builds.
