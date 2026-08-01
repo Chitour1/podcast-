@@ -1,0 +1,26 @@
+name: Export NISQA Evaluator
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official NISQA source and weights
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/gabrielmittag/NISQA.git NISQA
+          test -f NISQA/weights/nisqa.tar
+          test $(stat -c%s NISQA/weights/nisqa.tar) -gt 10000000
+          rm -rf NISQA/.git
+          tar -czf NISQA-Evaluator.tar.gz NISQA
+          sha256sum NISQA-Evaluator.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NISQA-Evaluator
+          path: NISQA-Evaluator.tar.gz
+          if-no-files-found: error
