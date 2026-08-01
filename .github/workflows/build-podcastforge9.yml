@@ -24,9 +24,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sha256sum pf9s9.part00 pf9s9.part01 pf9s9.part02
           cat pf9s9.part00 pf9s9.part01 pf9s9.part02 > pf9studio9.b64
           test "$(wc -c < pf9studio9.b64)" -eq 26980
           base64 -d pf9studio9.b64 > pf9studio9.zip
+          sha256sum pf9studio9.zip
           unzip -tq pf9studio9.zip
           unzip -q pf9studio9.zip
           test -f PodcastForgeStudio9/settings.gradle
