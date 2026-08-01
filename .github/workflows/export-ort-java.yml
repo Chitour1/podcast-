@@ -1,0 +1,24 @@
+name: Export ONNX Runtime Java
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download ONNX Runtime Java artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn -q dependency:copy -Dartifact=com.microsoft.onnxruntime:onnxruntime:1.20.1 -DoutputDirectory=ortjava
+          test -f ortjava/onnxruntime-1.20.1.jar
+          test $(stat -c%s ortjava/onnxruntime-1.20.1.jar) -gt 50000000
+          sha256sum ortjava/onnxruntime-1.20.1.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ONNX-Runtime-Java
+          path: ortjava/onnxruntime-1.20.1.jar
+          if-no-files-found: error
