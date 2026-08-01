@@ -1,0 +1,1 @@
+Build the complete offline-first Fi Zilal Android APK with embedded Quran and tafsir database.
