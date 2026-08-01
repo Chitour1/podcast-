@@ -1,0 +1,23 @@
+name: Export SQUIM Evaluation Model
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official Torchaudio SQUIM objective model
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --retry 4 --retry-delay 2 -fL 'https://download.pytorch.org/torchaudio/models/squim_objective_dns2020.pth' -o squim_objective_dns2020.pth
+          test $(stat -c%s squim_objective_dns2020.pth) -gt 20000000
+          sha256sum squim_objective_dns2020.pth
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SQUIM-Objective-Model
+          path: squim_objective_dns2020.pth
+          if-no-files-found: error
