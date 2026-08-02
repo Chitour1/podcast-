@@ -1,0 +1,109 @@
+name: Build Windows Portable EXE
+
+on:
+  push:
+    branches:
+      - neural-assets-v1
+    paths:
+      - "desktop_app/**"
+      - "desktop_web/**"
+      - "engine/**"
+      - "config/**"
+      - "build/**"
+      - "requirements-desktop.txt"
+      - ".github/workflows/build-portable-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements-desktop.txt
+
+      - name: Install CPU PyTorch
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install application dependencies
+        shell: pwsh
+        run: python -m pip install -r requirements-desktop.txt
+
+      - name: Download DeepFilterNet3 model through official package
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import shutil
+          from df.enhance import maybe_download_model
+          source = Path(maybe_download_model("DeepFilterNet3"))
+          target = Path("models") / "DeepFilterNet3"
+          if target.exists():
+              shutil.rmtree(target)
+          target.parent.mkdir(parents=True, exist_ok=True)
+          shutil.copytree(source, target)
+          assert (target / "config.ini").exists(), target
+          print(f"Model copied from {source} to {target}")
+          '@ | python -
+
+      - name: Install and collect FFmpeg
+        shell: pwsh
+        run: |
+          choco install ffmpeg --yes --no-progress
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          Copy-Item (Get-Command ffmpeg.exe).Source bin\ffmpeg.exe
+          Copy-Item (Get-Command ffprobe.exe).Source bin\ffprobe.exe
+          & bin\ffmpeg.exe -version
+
+      - name: Run Python checks
+        shell: pwsh
+        run: |
+          python -m compileall desktop_app engine
+          python -m pytest -q
+
+      - name: Build one-file Windows application
+        shell: pwsh
+        run: pyinstaller --noconfirm --clean build\portable.spec
+
+      - name: Verify bundled executable and neural model
+        shell: pwsh
+        run: |
+          $exe = "dist\ACRPS Podcast Engine.exe"
+          if (-not (Test-Path $exe)) { throw "Executable was not created" }
+          & $exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw "Portable self-test failed with exit code $LASTEXITCODE" }
+          Get-Item $exe | Format-List Name,Length,FullName
+
+      - name: Package delivery ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path delivery | Out-Null
+          Copy-Item "dist\ACRPS Podcast Engine.exe" "delivery\ACRPS Podcast Engine.exe"
+          @'
+          التشغيل: اضغط مرتين فقط على ACRPS Podcast Engine.exe
+          لا يحتاج Python أو BAT أو CMD أو تثبيتًا منفصلًا.
+          أول فتح قد يتأخر لأن التطبيق يفك مكوناته المحلية المؤقتة.
+          '@ | Set-Content -Encoding UTF8 "delivery\اقرأني.txt"
+          Compress-Archive -Path delivery\* -DestinationPath "ACRPS-Podcast-Engine-Windows-Portable.zip"
+
+      - name: Upload portable executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ACRPS-Podcast-Engine-Windows-Portable
+          path: ACRPS-Podcast-Engine-Windows-Portable.zip
+          if-no-files-found: error
+          retention-days: 14
