@@ -12,6 +12,17 @@ on:
       - "build/**"
       - "requirements-desktop.txt"
       - ".github/workflows/build-portable-windows.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "desktop_app/**"
+      - "desktop_web/**"
+      - "engine/**"
+      - "config/**"
+      - "build/**"
+      - "requirements-desktop.txt"
+      - ".github/workflows/build-portable-windows.yml"
   workflow_dispatch:
 
 permissions:
