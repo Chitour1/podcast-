@@ -1,0 +1,2 @@
+pace(int n){Space s=new Space(this);s.setLayoutParams(new LinearLayout.LayoutParams(1,dp(n)));return s;} GradientDrawable round(int c,int r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;} GradientDrawable circle(int c){GradientDrawable g=round(c,99);return g;} int dp(int x){return (int)(x*getResources().getDisplayMetrics().density+.5f);}
+}
