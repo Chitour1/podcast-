@@ -19,11 +19,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Restore Android project
+        run: |
+          rm -rf trainingapp
+          base64 -d payload/voxaride-v2.b64 > /tmp/voxaride-v2.zip
+          unzip -q /tmp/voxaride-v2.zip -d /tmp/voxaride-v2
+          mv /tmp/voxaride-v2/VoxaRideTrainingV2 trainingapp
       - name: Build debug APK
         working-directory: trainingapp
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VoxaRide-Training-APK
+          name: VoxaRide-V2-APK
           path: trainingapp/app/build/outputs/apk/debug/app-debug.apk
