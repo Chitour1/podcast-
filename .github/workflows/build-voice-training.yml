@@ -22,7 +22,7 @@ jobs:
       - name: Restore and update Android project
         run: |
           rm -rf trainingapp /tmp/voxaride
-          cat payload/voxaride.part* | base64 -d > /tmp/voxaride.zip
+          cat payload/voxaride.part?? | base64 -d > /tmp/voxaride.zip
           unzip -q /tmp/voxaride.zip -d /tmp/voxaride
           mv /tmp/voxaride/VoxaRideTraining trainingapp
           cat payload/mainv2.part00 | base64 -d | gzip -d > trainingapp/app/src/main/java/com/acrps/voxaride/MainActivity.java
