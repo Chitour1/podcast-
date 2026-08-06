@@ -3,6 +3,8 @@ name: Build Voice Training APK
 on:
   push:
     branches: [ voice-booking-training ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
