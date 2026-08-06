@@ -19,12 +19,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Restore Android project
+      - name: Restore and update Android project
         run: |
-          rm -rf trainingapp
-          base64 -d payload/voxaride-v2.b64 > /tmp/voxaride-v2.zip
-          unzip -q /tmp/voxaride-v2.zip -d /tmp/voxaride-v2
-          mv /tmp/voxaride-v2/VoxaRideTrainingV2 trainingapp
+          rm -rf trainingapp /tmp/voxaride
+          cat payload/voxaride.part* | base64 -d > /tmp/voxaride.zip
+          unzip -q /tmp/voxaride.zip -d /tmp/voxaride
+          mv /tmp/voxaride/VoxaRideTraining trainingapp
+          cat payload/mainv2.part00 | base64 -d | gzip -d > trainingapp/app/src/main/java/com/acrps/voxaride/MainActivity.java
+          sed -i "s/versionCode 1/versionCode 2/; s/versionName '1.0.0'/versionName '2.0.0'/" trainingapp/app/build.gradle
       - name: Build debug APK
         working-directory: trainingapp
         run: gradle :app:assembleDebug --no-daemon --stacktrace
