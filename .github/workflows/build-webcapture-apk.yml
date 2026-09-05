@@ -3,13 +3,6 @@ name: Build WebCapture Ultra APK
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - '.ci/webcapture.base0'
-      - '.ci/webcapture.base1'
-      - '.ci/MainActivity.partA'
-      - '.ci/MainActivity.partB'
-      - '.ci/JpegPdfWriter.java'
-      - '.github/workflows/build-webcapture-apk.yml'
   workflow_dispatch:
 
 jobs:
