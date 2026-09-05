@@ -4,8 +4,8 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - '.ci/webcapture.part0'
-      - '.ci/webcapture.part1'
+      - '.ci/webcapture.base0'
+      - '.ci/webcapture.base1'
       - '.ci/MainActivity.partA'
       - '.ci/MainActivity.partB'
       - '.ci/JpegPdfWriter.java'
@@ -39,7 +39,7 @@ jobs:
 
       - name: Restore and patch source
         run: |
-          cat .ci/webcapture.part0 .ci/webcapture.part1 | base64 -d > /tmp/WebCaptureUltra-source.zip
+          cat .ci/webcapture.base0 .ci/webcapture.base1 | base64 -d > /tmp/WebCaptureUltra-source.zip
           unzip -q /tmp/WebCaptureUltra-source.zip -d /tmp/webcapture
           test -f /tmp/webcapture/WebCaptureUltra/settings.gradle
           cat .ci/MainActivity.partA .ci/MainActivity.partB > /tmp/webcapture/WebCaptureUltra/app/src/main/java/com/webcapture/ultra/MainActivity.java
