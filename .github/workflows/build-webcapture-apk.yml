@@ -40,6 +40,14 @@ jobs:
           unzip -q /tmp/WebCaptureUltra-source.zip -d /tmp/webcapture
           test -f /tmp/webcapture/WebCaptureUltra/settings.gradle
 
+      - name: Upload restored source
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebCaptureUltra-Source
+          path: /tmp/WebCaptureUltra-source.zip
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Build debug APK
         run: gradle -p /tmp/webcapture/WebCaptureUltra --no-daemon --stacktrace assembleDebug
 
