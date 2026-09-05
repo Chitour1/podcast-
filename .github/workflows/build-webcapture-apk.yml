@@ -6,6 +6,9 @@ on:
     paths:
       - '.ci/webcapture.part0'
       - '.ci/webcapture.part1'
+      - '.ci/MainActivity.partA'
+      - '.ci/MainActivity.partB'
+      - '.ci/JpegPdfWriter.java'
       - '.github/workflows/build-webcapture-apk.yml'
   workflow_dispatch:
 
@@ -34,19 +37,14 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Restore source archive
+      - name: Restore and patch source
         run: |
           cat .ci/webcapture.part0 .ci/webcapture.part1 | base64 -d > /tmp/WebCaptureUltra-source.zip
           unzip -q /tmp/WebCaptureUltra-source.zip -d /tmp/webcapture
           test -f /tmp/webcapture/WebCaptureUltra/settings.gradle
-
-      - name: Upload restored source
-        uses: actions/upload-artifact@v4
-        with:
-          name: WebCaptureUltra-Source
-          path: /tmp/WebCaptureUltra-source.zip
-          if-no-files-found: error
-          retention-days: 1
+          cat .ci/MainActivity.partA .ci/MainActivity.partB > /tmp/webcapture/WebCaptureUltra/app/src/main/java/com/webcapture/ultra/MainActivity.java
+          cp .ci/JpegPdfWriter.java /tmp/webcapture/WebCaptureUltra/app/src/main/java/com/webcapture/ultra/JpegPdfWriter.java
+          sed -i 's/versionCode [0-9][0-9]*/versionCode 3/; s/versionName "[^"]*"/versionName "1.1.1"/' /tmp/webcapture/WebCaptureUltra/app/build.gradle
 
       - name: Build debug APK
         run: gradle -p /tmp/webcapture/WebCaptureUltra --no-daemon --stacktrace assembleDebug
@@ -54,12 +52,12 @@ jobs:
       - name: Collect APK
         run: |
           mkdir -p /tmp/artifact
-          cp /tmp/webcapture/WebCaptureUltra/app/build/outputs/apk/debug/app-debug.apk /tmp/artifact/WebCaptureUltra-debug.apk
+          cp /tmp/webcapture/WebCaptureUltra/app/build/outputs/apk/debug/app-debug.apk /tmp/artifact/WebCaptureUltra-v1.1.1-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: WebCaptureUltra-APK
-          path: /tmp/artifact/WebCaptureUltra-debug.apk
+          path: /tmp/artifact/WebCaptureUltra-v1.1.1-debug.apk
           if-no-files-found: error
           retention-days: 7
