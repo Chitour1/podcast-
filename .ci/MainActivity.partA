@@ -1,0 +1,190 @@
+package com.webcapture.ultra;
+
+import android.app.Activity;
+import android.content.ContentValues;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.MediaStore;
+import android.view.PixelCopy;
+import android.view.inputmethod.EditorInfo;
+import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+public class MainActivity extends Activity {
+    private WebView webView;
+    private EditText urlInput;
+    private Button captureButton;
+    private ProgressBar progress;
+    private TextView status;
+    private Spinner qualitySpinner, splitSpinner, compressionSpinner;
+    private CheckBox desktopMode;
+    private String mobileUserAgent;
+    private String baseName;
+    private final StringBuilder domSource = new StringBuilder();
+    private final StringBuilder originalSource = new StringBuilder();
+    private int domExpected = -1, domReceived = 0;
+    private int originalExpected = -1, originalReceived = 0;
+    private boolean busy = false;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private int captureDocHeight, captureViewportH, capturePageCount, captureMode, captureScreensPerImage, captureJpegQ;
+    private float captureScale;
+    private Uri capturePdfUri;
+    private OutputStream capturePdfStream;
+    private JpegPdfWriter capturePdfWriter;
+    private Bitmap groupedBitmap;
+    private int groupedUsedHeight = 0, groupedPartIndex = 0;
+
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        WebView.enableSlowWholeDocumentDraw();
+        setContentView(R.layout.activity_main);
+        webView = findViewById(R.id.webView);
+        urlInput = findViewById(R.id.urlInput);
+        captureButton = findViewById(R.id.captureButton);
+        progress = findViewById(R.id.progress);
+        status = findViewById(R.id.status);
+        qualitySpinner = findViewById(R.id.qualitySpinner);
+        splitSpinner = findViewById(R.id.splitSpinner);
+        compressionSpinner = findViewById(R.id.compressionSpinner);
+        desktopMode = findViewById(R.id.desktopMode);
+
+        ArrayAdapter<String> quality = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"خفيفة 1×", "واضحة 1.5×", "عالية 2×"});
+        qualitySpinner.setAdapter(quality); qualitySpinner.setSelection(0);
+
+        ArrayAdapter<String> split = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"صورة واحدة PNG", "تقسيم: كل شاشة", "تقسيم: كل شاشتين", "تقسيم: كل 3 شاشات"});
+        splitSpinner.setAdapter(split); splitSpinner.setSelection(1);
+
+        ArrayAdapter<String> compression = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"ضغط قوي 72%", "متوازن 82%", "جودة عالية 90%"});
+        compressionSpinner.setAdapter(compression); compressionSpinner.setSelection(1);
+
+        configureWebView();
+        findViewById(R.id.goButton).setOnClickListener(v -> openUrl());
+        findViewById(R.id.backButton).setOnClickListener(v -> { if (webView.canGoBack()) webView.goBack(); });
+        findViewById(R.id.forwardButton).setOnClickListener(v -> { if (webView.canGoForward()) webView.goForward(); });
+        findViewById(R.id.reloadButton).setOnClickListener(v -> webView.reload());
+        captureButton.setOnClickListener(v -> beginCapture());
+        urlInput.setOnEditorActionListener((v, actionId, event) -> { if (actionId == EditorInfo.IME_ACTION_GO) { openUrl(); return true; } return false; });
+        desktopMode.setOnCheckedChangeListener((buttonView, isChecked) -> applyDesktopMode(isChecked));
+        urlInput.setText("https://");
+    }
+
+    private void configureWebView() {
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setLoadWithOverviewMode(true);
+        s.setUseWideViewPort(true);
+        s.setBuiltInZoomControls(true);
+        s.setDisplayZoomControls(false);
+        s.setMediaPlaybackRequiresUserGesture(false);
+        s.setJavaScriptCanOpenWindowsAutomatically(true);
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        mobileUserAgent = s.getUserAgentString();
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+        webView.addJavascriptInterface(new WebBridge(), "AndroidBridge");
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                progress.setProgress(5); status.setText("تحميل الصفحة..."); urlInput.setText(url);
+            }
+            @Override public void onPageFinished(WebView view, String url) {
+                progress.setProgress(0); status.setText("الصفحة جاهزة — يمكنك التصفح أو الالتقاط"); urlInput.setText(url);
+            }
+        });
+    }
+
+    private void applyDesktopMode(boolean desktop) {
+        if (desktop) {
+            webView.getSettings().setUserAgentString("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36");
+            webView.getSettings().setUseWideViewPort(true);
+        } else webView.getSettings().setUserAgentString(mobileUserAgent);
+        if (webView.getUrl() != null) webView.reload();
+    }
+
+    private void openUrl() {
+        String u = urlInput.getText().toString().trim();
+        if (u.isEmpty()) return;
+        if (!u.startsWith("http://") && !u.startsWith("https://")) u = "https://" + u;
+        webView.loadUrl(u);
+    }
+
+    private void beginCapture() {
+        if (busy || webView.getUrl() == null) return;
+        busy = true; captureButton.setEnabled(false); progress.setProgress(1);
+        String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        baseName = sanitize(webView.getTitle()) + "_" + stamp;
+        status.setText("تمرير الصفحة تلقائيًا لتشغيل كل المحتوى...");
+        String js = "(function(){if(window.__wcuRunning)return;window.__wcuRunning=true;" +
+                "let lastH=0,stable=0,steps=0;let t=setInterval(function(){" +
+                "let d=document.documentElement,b=document.body;let h=Math.max(d.scrollHeight,d.offsetHeight,d.clientHeight,b?b.scrollHeight:0,b?b.offsetHeight:0);" +
+                "let vh=window.innerHeight||d.clientHeight;let y=window.scrollY||d.scrollTop||0;" +
+                "if(y+vh<h-3){window.scrollBy(0,Math.max(300,Math.floor(vh*0.86)));stable=0;}else{window.scrollTo(0,h);if(Math.abs(h-lastH)<3)stable++;else stable=0;}" +
+                "lastH=h;steps++;try{AndroidBridge.onScrollProgress(Math.min(99,Math.round(((window.scrollY+vh)/Math.max(h,1))*100)));}catch(e){}" +
+                "if(stable>=5||steps>3500){clearInterval(t);window.__wcuRunning=false;setTimeout(function(){AndroidBridge.onScrollDone(h);},1100);}" +
+                "},180);})();";
+        webView.evaluateJavascript(js, null);
+    }
+
+    private void requestDomSource() {
+        domSource.setLength(0); domExpected = -1; domReceived = 0;
+        status.setText("استخراج DOM الكامل للصفحة..."); progress.setProgress(34);
+        String js = "(function(){let h='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;let n=90000,t=Math.ceil(h.length/n);" +
+                "for(let i=0;i<t;i++)AndroidBridge.onDomChunk(i,t,h.substring(i*n,Math.min(h.length,(i+1)*n)));AndroidBridge.onDomDone();})();";
+        webView.evaluateJavascript(js, null);
+    }
+
+    private void requestOriginalSource() {
+        originalSource.setLength(0); originalExpected = -1; originalReceived = 0;
+        status.setText("جلب المصدر الأصلي للصفحة..."); progress.setProgress(42);
+        String js = "(function(){fetch(location.href,{credentials:'include',cache:'no-store'}).then(function(r){return r.text();}).then(function(h){var n=90000,t=Math.ceil(h.length/n);for(var i=0;i<t;i++){var part=h.substring(i*n,Math.min(h.length,(i+1)*n));AndroidBridge.onOriginalChunk(i,t,part);}AndroidBridge.onOriginalDone();}).catch(function(e){AndroidBridge.onOriginalFailed(String(e));});})();";
+        webView.evaluateJavascript(js, null);
+    }
+
+    private void afterSources() {
+        runOnUiThread(() -> {
+            try {
+                saveText(baseName + "_DOM.html", domSource.toString(), "text/html");
+                if (originalSource.length() > 0) saveText(baseName + "_SOURCE.html", originalSource.toString(), "text/html");
+                saveText(baseName + "_INFO.txt", "URL: " + webView.getUrl() + "\nTitle: " + webView.getTitle() + "\nCaptured: " + new Date() + "\nDOM source: complete post-render DOM\nOriginal source: " + (originalSource.length() > 0 ? "saved" : "unavailable; DOM snapshot retained") + "\n", "text/plain");
+                webView.scrollTo(0, 0);
+                webView.postDelayed(this::startVisualExport, 450);
+            } catch (Exception e) { fail("فشل حفظ المصدر: " + e.getMessage()); }
+        });
+    }
+
+    private float outputScale() {
+        int p = qualitySpinner.getSelectedItemPosition();
+        return p == 0 ? 1f : (p == 1 ? 1.5f : 2f);
+    }
+
+    private int jpegQuality() {
+        int p = compressionSpinner.getSelectedItemPosition();
+        return p == 0 ? 72 : (p == 2 ? 90 : 82);
+    }
+
+    /**
+     * Captures the actually rendered WebView viewport, page by page.  This is
