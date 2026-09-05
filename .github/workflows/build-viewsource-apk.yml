@@ -30,9 +30,7 @@ jobs:
           gradle-version: '8.10.2'
 
       - name: Restore source archive
-        run: |
-          cat .ci/viewsource.part0 .ci/viewsource.part1 | base64 -d > ViewSourceUltra-source.zip
-          unzip -q ViewSourceUltra-source.zip
+        run: unzip -q ViewSourceUltra-source.zip
 
       - name: Build debug APK
         working-directory: ViewSourceUltra
