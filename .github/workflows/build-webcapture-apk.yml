@@ -32,11 +32,11 @@ jobs:
 
       - name: Restore and patch source
         run: |
-          cat .ci/webcapture.base0 .ci/webcapture.base1 | base64 -d > /tmp/WebCaptureUltra-source.zip
-          unzip -q /tmp/WebCaptureUltra-source.zip -d /tmp/webcapture
+          unzip -q .ci/WebCaptureUltra-source.zip -d /tmp/webcapture
           test -f /tmp/webcapture/WebCaptureUltra/settings.gradle
           cat .ci/MainActivity.partA .ci/MainActivity.partB > /tmp/webcapture/WebCaptureUltra/app/src/main/java/com/webcapture/ultra/MainActivity.java
           cp .ci/JpegPdfWriter.java /tmp/webcapture/WebCaptureUltra/app/src/main/java/com/webcapture/ultra/JpegPdfWriter.java
+          cp .ci/activity_main.xml /tmp/webcapture/WebCaptureUltra/app/src/main/res/layout/activity_main.xml
           sed -i 's/versionCode [0-9][0-9]*/versionCode 3/; s/versionName "[^"]*"/versionName "1.1.1"/' /tmp/webcapture/WebCaptureUltra/app/build.gradle
 
       - name: Build debug APK
