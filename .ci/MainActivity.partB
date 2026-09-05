@@ -1,0 +1,216 @@
+     * intentionally different from translating webView.draw(): Chromium may
+     * not raster off-screen tiles, which is what caused page 2+ of PDFs to be blank.
+     */
+    private void startVisualExport() {
+        try {
+            captureDocHeight = Math.max(webView.getHeight(), Math.round(webView.getContentHeight() * webView.getScale()));
+            captureViewportH = Math.max(1, webView.getHeight());
+            capturePageCount = Math.max(1, (int)Math.ceil(captureDocHeight / (double)captureViewportH));
+            captureMode = splitSpinner.getSelectedItemPosition();
+            captureScreensPerImage = Math.max(1, captureMode);
+            captureJpegQ = jpegQuality();
+            captureScale = outputScale();
+
+            capturePdfUri = createOutput(baseName + "_FULL.pdf", "application/pdf");
+            capturePdfStream = getContentResolver().openOutputStream(capturePdfUri, "w");
+            if (capturePdfStream == null) throw new Exception("تعذر فتح ملف PDF");
+            capturePdfWriter = new JpegPdfWriter(capturePdfStream, capturePageCount);
+
+            groupedBitmap = null; groupedUsedHeight = 0; groupedPartIndex = 0;
+            status.setText("إنشاء PDF مضغوط وصور الصفحة — 0/" + capturePageCount);
+            progress.setProgress(50);
+            captureViewportPage(0, 0);
+        } catch (Exception e) { closeCaptureResources(true); fail("فشل بدء الالتقاط: " + e.getMessage()); }
+    }
+
+    private void captureViewportPage(int index, int retry) {
+        if (index >= capturePageCount) { finishVisualExport(); return; }
+        int desiredY = index * captureViewportH;
+        int maxScroll = Math.max(0, captureDocHeight - captureViewportH);
+        int actualY = Math.min(desiredY, maxScroll);
+        webView.scrollTo(0, actualY);
+        mainHandler.postDelayed(() -> pixelCopyPage(index, desiredY, actualY, retry), retry == 0 ? 130 : 260);
+    }
+
+    private void pixelCopyPage(int index, int desiredY, int actualY, int retry) {
+        try {
+            int w = Math.max(1, webView.getWidth());
+            int h = Math.max(1, webView.getHeight());
+            Bitmap viewport = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            int[] loc = new int[2]; webView.getLocationInWindow(loc);
+            Rect src = new Rect(loc[0], loc[1], loc[0] + w, loc[1] + h);
+            PixelCopy.request(getWindow(), src, viewport, result -> {
+                if (result != PixelCopy.SUCCESS) {
+                    viewport.recycle();
+                    if (retry < 2) captureViewportPage(index, retry + 1);
+                    else { closeCaptureResources(true); fail("تعذر التقاط الجزء " + (index + 1) + " من الصفحة"); }
+                    return;
+                }
+                try {
+                    int cropTop = Math.max(0, desiredY - actualY);
+                    int wantedH = Math.min(captureViewportH, captureDocHeight - desiredY);
+                    wantedH = Math.max(1, Math.min(wantedH, h - cropTop));
+                    Bitmap piece = Bitmap.createBitmap(viewport, 0, cropTop, w, wantedH);
+                    if (piece != viewport) viewport.recycle();
+                    consumePiece(index, piece);
+                } catch (Throwable e) {
+                    if (!viewport.isRecycled()) viewport.recycle();
+                    closeCaptureResources(true); fail("فشل معالجة الجزء " + (index + 1) + ": " + e.getMessage());
+                }
+            }, mainHandler);
+        } catch (Throwable e) {
+            if (retry < 2) captureViewportPage(index, retry + 1);
+            else { closeCaptureResources(true); fail("فشل التقاط الصفحة: " + e.getMessage()); }
+        }
+    }
+
+    private void consumePiece(int index, Bitmap piece) throws Exception {
+        ByteArrayOutputStream jpeg = new ByteArrayOutputStream();
+        if (!piece.compress(Bitmap.CompressFormat.JPEG, captureJpegQ, jpeg)) throw new Exception("تعذر ضغط صفحة PDF");
+        capturePdfWriter.addPage(jpeg.toByteArray(), piece.getWidth(), piece.getHeight());
+
+        if (captureMode > 0) addPieceToImageGroup(piece, index == capturePageCount - 1);
+        piece.recycle();
+
+        int done = index + 1;
+        status.setText("إنشاء PDF مضغوط وصور الصفحة — " + done + "/" + capturePageCount);
+        progress.setProgress(50 + (int)(46.0 * done / capturePageCount));
+        captureViewportPage(index + 1, 0);
+    }
+
+    private void addPieceToImageGroup(Bitmap piece, boolean lastPiece) throws Exception {
+        int outW = Math.max(1, Math.round(piece.getWidth() * captureScale));
+        int outPieceH = Math.max(1, Math.round(piece.getHeight() * captureScale));
+        int maxGroupH = Math.max(outPieceH, Math.round(captureViewportH * captureScale) * captureScreensPerImage);
+        if (groupedBitmap == null) {
+            groupedBitmap = Bitmap.createBitmap(outW, maxGroupH, Bitmap.Config.RGB_565);
+            Canvas bg = new Canvas(groupedBitmap); bg.drawColor(Color.WHITE);
+            groupedUsedHeight = 0;
+        }
+        Canvas c = new Canvas(groupedBitmap);
+        Rect dst = new Rect(0, groupedUsedHeight, outW, groupedUsedHeight + outPieceH);
+        c.drawBitmap(piece, null, dst, null);
+        groupedUsedHeight += outPieceH;
+
+        boolean groupFull = groupedUsedHeight >= maxGroupH - 2;
+        if (groupFull || lastPiece) saveCurrentImageGroup();
+    }
+
+    private void saveCurrentImageGroup() throws Exception {
+        if (groupedBitmap == null || groupedUsedHeight <= 0) return;
+        Bitmap toSave = groupedUsedHeight == groupedBitmap.getHeight() ? groupedBitmap :
+                Bitmap.createBitmap(groupedBitmap, 0, 0, groupedBitmap.getWidth(), groupedUsedHeight);
+        groupedPartIndex++;
+        String name = String.format(Locale.US, "%s_PART_%03d.jpg", baseName, groupedPartIndex);
+        Uri uri = createOutput(name, "image/jpeg");
+        try (OutputStream os = getContentResolver().openOutputStream(uri, "w")) {
+            if (os == null || !toSave.compress(Bitmap.CompressFormat.JPEG, captureJpegQ, os)) throw new Exception("تعذر ضغط الصورة " + groupedPartIndex);
+        }
+        finishOutput(uri);
+        if (toSave != groupedBitmap) toSave.recycle();
+        groupedBitmap.recycle(); groupedBitmap = null; groupedUsedHeight = 0;
+    }
+
+    private void finishVisualExport() {
+        try {
+            capturePdfWriter.finish();
+            capturePdfWriter = null;
+            if (capturePdfStream != null) { capturePdfStream.close(); capturePdfStream = null; }
+            finishOutput(capturePdfUri);
+            capturePdfUri = null;
+
+            if (captureMode == 0) {
+                webView.scrollTo(0, 0);
+                mainHandler.postDelayed(this::captureSinglePng, 250);
+            } else {
+                webView.scrollTo(0, 0);
+                finishCapture("تم — PDF كامل + " + groupedPartIndex + " صور مقطعة ومضغوطة + المصدر في Downloads/WebCapture");
+            }
+        } catch (Exception e) { closeCaptureResources(true); fail("فشل إنهاء PDF: " + e.getMessage()); }
+    }
+
+    private void captureSinglePng() {
+        try {
+            int docHeight = Math.max(webView.getHeight(), Math.round(webView.getContentHeight() * webView.getScale()));
+            float q = outputScale();
+            int outW = Math.max(1, Math.round(webView.getWidth() * q));
+            int outH = Math.max(1, Math.round(docHeight * q));
+            status.setText("إنشاء صورة PNG واحدة..."); progress.setProgress(96);
+            Uri pngUri = createOutput(baseName + "_FULL.png", "image/png");
+            try (OutputStream os = getContentResolver().openOutputStream(pngUri, "w")) {
+                final int tileH = 512;
+                PngStreamWriter.write(os, outW, outH, tileH, (y, h) -> {
+                    Bitmap b = Bitmap.createBitmap(outW, h, Bitmap.Config.RGB_565);
+                    Canvas c = new Canvas(b); c.drawColor(Color.WHITE);
+                    c.scale(q, q); c.translate(0, -y / q);
+                    webView.draw(c);
+                    return b;
+                });
+            }
+            finishOutput(pngUri);
+            finishCapture("تم — PDF كامل + صورة واحدة + المصدر في Downloads/WebCapture");
+        } catch (Throwable e) { fail("فشل إنشاء الصورة الواحدة: " + e.getMessage()); }
+    }
+
+    private void closeCaptureResources(boolean deletePendingPdf) {
+        try { if (capturePdfWriter != null) capturePdfWriter.close(); } catch (Exception ignored) {}
+        capturePdfWriter = null;
+        try { if (capturePdfStream != null) capturePdfStream.close(); } catch (Exception ignored) {}
+        capturePdfStream = null;
+        if (groupedBitmap != null) { groupedBitmap.recycle(); groupedBitmap = null; }
+        groupedUsedHeight = 0;
+        if (deletePendingPdf && capturePdfUri != null) {
+            try { getContentResolver().delete(capturePdfUri, null, null); } catch (Exception ignored) {}
+        }
+        capturePdfUri = null;
+    }
+
+    private void finishCapture(String message) {
+        progress.setProgress(100); status.setText(message);
+        Toast.makeText(this, "اكتمل حفظ الصفحة", Toast.LENGTH_LONG).show();
+        busy = false; captureButton.setEnabled(true);
+    }
+
+    private Uri createOutput(String name, String mime) throws Exception {
+        ContentValues v = new ContentValues();
+        v.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+        v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+        v.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/WebCapture");
+        v.put(MediaStore.MediaColumns.IS_PENDING, 1);
+        Uri u = getContentResolver().insert(MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY), v);
+        if (u == null) throw new Exception("تعذر إنشاء " + name);
+        return u;
+    }
+
+    private void finishOutput(Uri uri) {
+        ContentValues v = new ContentValues(); v.put(MediaStore.MediaColumns.IS_PENDING, 0); getContentResolver().update(uri, v, null, null);
+    }
+
+    private void saveText(String name, String text, String mime) throws Exception {
+        Uri u = createOutput(name, mime);
+        try (OutputStream os = getContentResolver().openOutputStream(u, "w")) { os.write(text.getBytes(StandardCharsets.UTF_8)); }
+        finishOutput(u);
+    }
+
+    private String sanitize(String s) {
+        if (s == null || s.trim().isEmpty()) return "webpage";
+        s = s.replaceAll("[\\\\/:*?\"<>|\\n\\r]+", "_").trim();
+        return s.length() > 60 ? s.substring(0,60) : s;
+    }
+
+    private void fail(String msg) {
+        runOnUiThread(() -> { busy = false; captureButton.setEnabled(true); progress.setProgress(0); status.setText(msg); Toast.makeText(this, msg, Toast.LENGTH_LONG).show(); });
+    }
+
+    public final class WebBridge {
+        @JavascriptInterface public void onScrollProgress(int p) { runOnUiThread(() -> progress.setProgress(Math.max(1, Math.min(30, p * 30 / 100)))); }
+        @JavascriptInterface public void onScrollDone(double h) { runOnUiThread(() -> { webView.scrollTo(0,0); progress.setProgress(31); webView.postDelayed(MainActivity.this::requestDomSource, 500); }); }
+        @JavascriptInterface public synchronized void onDomChunk(int i, int total, String part) { if (domExpected < 0) domExpected = total; domSource.append(part); domReceived++; }
+        @JavascriptInterface public void onDomDone() { runOnUiThread(() -> requestOriginalSource()); }
+        @JavascriptInterface public synchronized void onOriginalChunk(int i, int total, String part) { if (originalExpected < 0) originalExpected = total; originalSource.append(part); originalReceived++; }
+        @JavascriptInterface public void onOriginalDone() { afterSources(); }
+        @JavascriptInterface public void onOriginalFailed(String error) { originalSource.setLength(0); afterSources(); }
+    }
+
+    @Override public void onBackPressed() { if (webView != null && webView.canGoBack()) webView.goBack(); else super.onBackPressed(); }
+}
