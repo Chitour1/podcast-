@@ -31,6 +31,21 @@ jobs:
           npx expo install expo-sqlite expo-status-bar react-native-safe-area-context
           npm install --legacy-peer-deps
 
+      - name: Fix and validate premium UI bundle
+        working-directory: program-smarter-ci
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('App.tsx')
+          s=p.read_text()
+          old="catch{Alert.alert('Program','Build a routine first.')}}/>"
+          new="catch{Alert.alert('Program','Build a routine first.')}}}/>"
+          if old not in s:
+              raise SystemExit('expected AppInner fragment not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          npx expo export --platform android --output-dir /tmp/program-smarter-export
+
       - name: Prebuild Android
         working-directory: program-smarter-ci
         run: npx expo prebuild --platform android --clean --no-install
@@ -44,6 +59,6 @@ jobs:
       - name: Upload standalone APK
         uses: actions/upload-artifact@v4
         with:
-          name: program-smarter-standalone-apk
+          name: program-smarter-premium-apk
           path: program-smarter-ci/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
