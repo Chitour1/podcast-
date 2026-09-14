@@ -1,0 +1,15 @@
+const test=require('node:test');const assert=require('node:assert/strict');
+const p=require('./progression.js');
+const cfg={repMin:6,repMax:10,targetSets:3,targetRir:2,incrementKg:2.5,startWeightKg:80};
+const exp=(reps,rir=2,extra={})=>({sets:reps.map(r=>({completed:true,type:'work',weightKg:80,reps:r,rir})),...extra});
+test('two top exposures increase by minimum increment',()=>{const r=p.decideProgression(cfg,[exp([10,10,10]),exp([10,10,10])]);assert.equal(r.action,'increase');assert.equal(r.weightKg,82.5);assert.equal(r.targetReps,6)});
+test('middle range holds load and nudges reps',()=>{const r=p.decideProgression(cfg,[exp([8,8,7])]);assert.equal(r.action,'hold');assert.equal(r.weightKg,80);assert.equal(r.targetReps,9)});
+test('single bad exposure does not punish',()=>{const r=p.decideProgression(cfg,[exp([5,5,4]),exp([8,8,8])]);assert.equal(r.action,'hold');assert.equal(r.weightKg,80)});
+test('two failures suggest small optional reduction',()=>{const r=p.decideProgression(cfg,[exp([5,5,4]),exp([5,5,5])]);assert.equal(r.action,'reduce');assert.equal(r.weightKg,77.5);assert.equal(r.optional,true)});
+test('excluded busy exposure is ignored',()=>{const r=p.decideProgression(cfg,[exp([3,3,3],0,{excluded:true}),exp([10,10,10]),exp([10,10,10])]);assert.equal(r.action,'increase')});
+test('time compressed set is excluded from quality',()=>{const e={sets:[{completed:true,type:'work',weightKg:80,reps:10,rir:2},{completed:true,type:'work',weightKg:80,reps:10,rir:2},{completed:false,type:'work',weightKg:80,reps:0,excludedReason:'time_compression'}]};assert.equal(p.exposureQuality(e,cfg),'incomplete')});
+test('long gap produces optional conservative return adjustment',()=>{const r=p.decideProgression(cfg,[exp([10,10,10])],{daysSinceLast:35});assert.equal(r.action,'return_adjustment');assert.equal(r.optional,true)});
+test('unit conversion roundtrip',()=>{const kg=92.5;assert.ok(Math.abs(p.lbToKg(p.kgToLb(kg))-kg)<1e-9)});
+test('increment rounding',()=>{assert.equal(p.roundToIncrement(83.1,2.5),82.5);assert.equal(p.roundToIncrement(83.9,2.5),85)});
+test('substitutes prefer same primary and pattern',()=>{const cur={id:'a',primary:'Chest',pattern:'push',subGroup:'press',equipment:'Barbell'};const c=[{id:'b',name:'B',primary:'Chest',pattern:'push',subGroup:'press',equipment:'Dumbbells'},{id:'c',name:'C',primary:'Back',pattern:'pull',subGroup:'row',equipment:'Cable'}];assert.equal(p.rankSubstitutes(cur,c,['Dumbbells','Cable'])[0].id,'b')});
+test('time compression removes optional work first',()=>{const plan=p.timeCompressionPlan([{id:'main',priority:'high',remainingSets:3,restSec:180,position:0},{id:'acc',priority:'optional',remainingSets:4,restSec:60,position:1}],12);assert.ok(plan.changes.length>0);assert.equal(plan.items[0].remainingSets,3)});
