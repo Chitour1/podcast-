@@ -8,16 +8,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore source archive
+      - name: Restore exact source archive
         shell: bash
         run: |
           set -euo pipefail
-          cat program-smarter-build/part*.b64 | base64 -d > /tmp/program-smarter.zip
+          cat \
+            program-smarter-build/part00.b64 \
+            program-smarter-build/part01.b64 \
+            program-smarter-build/tail00.b64 \
+            program-smarter-build/tail01.b64 \
+            program-smarter-build/tail02.b64 \
+            program-smarter-build/tail03.b64 \
+            program-smarter-build/t4-00.b64 \
+            program-smarter-build/t4-01.b64 \
+            program-smarter-build/t4-02.b64 \
+            program-smarter-build/t4-03.b64 \
+            program-smarter-build/t5-00.b64 \
+            program-smarter-build/t5-01.b64 \
+            program-smarter-build/t5-02.b64 \
+            | base64 -d > /tmp/program-smarter.zip
+          echo "95a1555535da645f1ce5843f9d9aa9c7a4492703cb331c8fceab63ffe0cb5788  /tmp/program-smarter.zip" | sha256sum -c -
           unzip -q /tmp/program-smarter.zip -d /tmp/program-smarter-src
           test -f /tmp/program-smarter-src/program-smarter/package.json
 
