@@ -1,6 +1,6 @@
 {
   "name": "program-smarter-mobile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -8,11 +8,14 @@
     "android": "expo run:android"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
     "expo": "~57.0.14",
+    "expo-linear-gradient": "~57.0.1",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.2",
-    "react-native-safe-area-context": "~5.8.0"
+    "react-native-safe-area-context": "~5.8.0",
+    "react-native-svg": "15.15.1"
   }
 }
