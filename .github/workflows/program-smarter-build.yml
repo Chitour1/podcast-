@@ -29,6 +29,7 @@ jobs:
           rm -f package-lock.json
           npm install --legacy-peer-deps
           npx expo install expo-sqlite expo-status-bar react-native-safe-area-context
+          npm install buffer --legacy-peer-deps
           npm install --legacy-peer-deps
 
       - name: Fix and validate premium UI bundle
