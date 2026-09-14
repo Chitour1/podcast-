@@ -1,4 +1,4 @@
-name: Program Smarter Android Build
+name: Program Smarter Android Standalone Build
 
 on:
   push:
@@ -35,13 +35,15 @@ jobs:
         working-directory: program-smarter-ci
         run: npx expo prebuild --platform android --clean --no-install
 
-      - name: Build APK
+      - name: Build standalone release APK
         working-directory: program-smarter-ci/android
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        env:
+          NODE_ENV: production
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Upload APK
+      - name: Upload standalone APK
         uses: actions/upload-artifact@v4
         with:
-          name: program-smarter-apk
-          path: program-smarter-ci/android/app/build/outputs/apk/debug/app-debug.apk
+          name: program-smarter-standalone-apk
+          path: program-smarter-ci/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
