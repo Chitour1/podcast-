@@ -1,16 +1,24 @@
 {
   "name": "program-smarter-mobile",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android"
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "test:domain": "node --test src/domain/progression.test.cjs",
+    "export:android": "expo export --platform android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "buffer": "^6.0.3",
     "expo": "~57.0.14",
+    "expo-document-picker": "*",
+    "expo-file-system": "*",
+    "expo-haptics": "*",
     "expo-linear-gradient": "~57.0.1",
+    "expo-sharing": "*",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
