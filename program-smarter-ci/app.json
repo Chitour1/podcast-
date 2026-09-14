@@ -2,15 +2,16 @@
   "expo": {
     "name": "Program Smarter",
     "slug": "program-smarter",
-    "version": "0.1.0",
+    "version": "0.4.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.programsmarter.app",
-      "versionCode": 1
+      "versionCode": 4
     },
     "ios": {
       "bundleIdentifier": "com.programsmarter.app",
+      "buildNumber": "4",
       "supportsTablet": true
     },
     "plugins": ["expo-sqlite"],
